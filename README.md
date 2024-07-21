@@ -2,6 +2,7 @@
 
 This repo presents a walkthrough of setting up TRIPS and training with own images in AWS environment.
 
+
 <div style="text-align: center;">Linus Franke, Darius Rückert, Laura Fink, Marc Stamminger</div>
 
 
@@ -39,8 +40,10 @@ Software Requirement: Conda (Anaconda/Miniconda)
 
 ## Set Up AWS EC2 Instance
 You have to setup an AWS EC2 instance with NVIDIA GPU. The one we tested was g6.xlarge.
-For storage, the package (TRIPS, colmap) and application (miniconda) should take less then 20GB. 
+
+For storage, the package (TRIPS, colmap, miniconda) should take less then 20GB. 
 If you aim at training your model with your own images, you should also reserve at least 101x of the size of your images for COLMAP dense reconstruction prior to model training, i.e. reserve 101GB for 1.0GB images.
+
 Then, you can connect with your EC2 instance via SSH and Terminal, or other methods provided by AWS.
 
 ## Install Instructions Linux
@@ -60,16 +63,17 @@ sudo apt install xorg-dev
 (There exists a headless mode without window management meant for training on a cluster, see below)
 
 ### Install NVIDIA GPU Driver
-Please refer to Step 1 - Step 5 in the [blogpost](https://www.cherryservers.com/blog/install-cuda-ubuntu) for the installation guide.
+Please refer to Step 1 - Step 5 in the [blogpost](https://www.cherryservers.com/blog/install-cuda-ubuntu) for the installation guide. \
 OR you can simply run the command below (latest update: 2024 Jul)
 ```
 sudo apt install nvidia-driver-535
+nvidia-smi
 ```
 
 ### Install Miniconda
-Please refer to the official installation guide [here](https://docs.anaconda.com/miniconda/#quick-command-line-install)
+Please refer to the official installation guide [here](https://docs.anaconda.com/miniconda/#quick-command-line-install). \
 OR you can simply run the command below
-```
+```shell
 mkdir -p ~/miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
 bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
@@ -80,7 +84,7 @@ source ~/.bashrc
 ```
 
 ### Clone Repo
-```
+```shell
 git clone git@github.com:lfranke/TRIPS.git
 cd TRIPS/
 ```
@@ -130,7 +134,7 @@ cmake -DCMAKE_PREFIX_PATH="./External/libtorch/;${CONDA}" ..
 make
 ```
 
-make can take a long time, especially for some CUDA files.
+`make` can take a VERY long time, especially for some CUDA files.
 
 It is VERY likely that you will get a `undefined reference to ...@GLIBCXX_3.4.30' ` error during linking at around 93% of `make` process, most likely your linker fails to resolve the global and conda version of the c++ standard library.
 
@@ -166,7 +170,7 @@ docker run -v {data_path}:/data --gpus all -it trips /bin/bash
 ```
 
 ### Running viewer (Linux only)
-**The command below is yet to be confirmed!**
+**The command below is yet to be confirmed!** \
 First enable X forwarding from docker
 ```
 sudo xhost +local:docker
@@ -183,7 +187,21 @@ Supplemental materials link: [https://zenodo.org/records/10664666](https://zenod
 After a successful compilation, the best way to get started is to run `viewer` on the *tanks and temples* scenes
 using our pretrained models.
 First, download the scenes (`tt_scenes.zip`) and extract them into `scenes/`.
-Now, download the model checkpoints (`tt_checkpoints.zip`) and extract them into `experiments/`. Your folder structure should look like this:
+Now, download the model checkpoints (`tt_checkpoints.zip`) and extract them into `experiments/`. 
+
+Run the command below in the root directory of `TRIPS` repo
+```
+wget https://zenodo.org/records/10687419/files/tt_scenes.zip
+unzip tt_scenes.zip 
+mv tnt_scenes/* scenes/
+rm tt_scenes.zip
+
+wget https://zenodo.org/records/10687419/files/tt_checkpoints.zip
+unzip tt_checkpoints.zip -d experiments/
+rm tt_checkpoints.zip
+```
+
+Your folder structure should look like this:
 
 ```shell
 TRIPS/
@@ -203,7 +221,7 @@ TRIPS/
 The supplemental data also includes data for the boat (checkpoint and scene combined in one zip), mipnerf360 scenes (in the resolutions used in the paper) and mipnerf360 checkpoints.
 
 ## Viewer
-
+**The command below is yet to be confirmed!** \
 Your working directory should be the trips root directory.
 
 ### Linux
@@ -248,16 +266,75 @@ By default, TRIPS is compiled with a reduced GUI. If you want all GUI buttons pr
 
 ## Scene Description
 
-* TRIPS uses [ADOP](https://github.com/darglein/ADOP)'s scene format.
-* [ADOP](https://github.com/darglein/ADOP) uses a simple, text-based scene description format.
-* To run on your scenes you have to convert them into this format.
-* If you have created your scene with COLMAP (like us) you can use the colmap2adop converter.
-* More infos on this topic can be found here: [scenes/README.md](scenes/README.md)
+TRIPS uses [ADOP](https://github.com/darglein/ADOP)'s scene format. [ADOP](https://github.com/darglein/ADOP) uses a simple, text-based scene description format.
+
+To run on your scenes you have to convert them into this format. If you have created your scene with COLMAP (like us) you can use the colmap2adop converter. More infos on this topic can be found here: [scenes/README.md](scenes/README.md)
+
+OR you can refer to the `Training` session below.
 
 ## Training
+### Install COLMAP (for your own images only)
+Please refer to the official [documentation](https://colmap.github.io/install.html#build-from-source) to install `COLMAP`.
 
+OR you can simply run the command below
+```
+sudo apt-get install \
+    git \
+    cmake \
+    ninja-build \
+    build-essential \
+    libboost-program-options-dev \
+    libboost-filesystem-dev \
+    libboost-graph-dev \
+    libboost-system-dev \
+    libeigen3-dev \
+    libflann-dev \
+    libfreeimage-dev \
+    libmetis-dev \
+    libgoogle-glog-dev \
+    libgtest-dev \
+    libsqlite3-dev \
+    libglew-dev \
+    qtbase5-dev \
+    libqt5opengl5-dev \
+    libcgal-dev \
+    libceres-dev
+
+sudo apt-get install -y \
+    nvidia-cuda-toolkit \
+    nvidia-cuda-toolkit-gcc
+
+sudo apt-get install gcc-10 g++-10
+export CC=/usr/bin/gcc-10
+export CXX=/usr/bin/g++-10
+export CUDAHOSTCXX=/usr/bin/g++-10
+
+git clone https://github.com/colmap/colmap.git
+cd colmap
+mkdir build
+cd build
+## Quick fix for the failure to detect the appropriate CUDA architecture during the cmake process
+cmake .. -GNinja -DCMAKE_CUDA_ARCHITECTURES=75
+ninja
+sudo ninja install
+```
+
+### Image Reconstruction and Conversion (for your own images only)
+Assume your images are already in `scenes` folder, e.g. `~/TRIPS/scenes/{your_scene_name}/images/`
+
+You can simply run the command below in the root directory of `TRIPS` repo for COLMAP reconstruction (sparse + dense) for your images and COLMAP to ADOP conversion conversion prior to model training.
+```
+## COLMAP reconstruction
+bash ./colmap_reconstruction.sh ~/TRIPS/scenes/{your_scene_name}
+
+## COLMAP to ADOP conversion
+./colmap2adop.sh  ~/TRIPS/scenes/{your_scene_name}  ~/TRIPS/scenes/{your_scene_name}
+```
+> Note: COLMAP dense reconstruction will occupy 100x of the size of your images in your storage. However, you can remove the reconstructions (folder `scenes/{your_scene_name}/sparse`, `scenes/{your_scene_name}/dense`) after COLMAP to ADOP conversion procedure.
+
+### Model Training
 The pipeline is fitted to your scenes by the `train` executable.
-All training parameters are stored in a separate config file.
+All training parameters are stored in a separate config file, e.g. `train_normalnet.ini`.
 The basic syntax is:
 
 Linux:
@@ -268,32 +345,41 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CONDA/lib
 
 ./build/bin/train --config configs/train_normalnet.ini
 ```
+
 Windows:
 ```shell
 ./build/bin/RelWithDebInfo/train.exe --config configs/train_normalnet.ini
 ```
 (depending on the shell, the full path `C:\....\TRIPS\build\bin\...` may have to be used)
 
-Make again sure that the working directory is the root.
+Make again sure that the working directory is the root directory of `TRIPS`
 Otherwise, the loss models will not be found.
 
-Two configs are given for the two networks used in the paper: train_normalnet.ini and train_sphericalnet.ini
-You can override the options in these configs easily via the command line.
+The training results will be found in folder `experiments/`, e.g. `~/TRIPS/experiments/YYYY-MM-DD_hh-mm-ss_{your_training_name}`
+
+Two configs are given for the two networks used in the paper: `train_normalnet.ini` and `train_sphericalnet.ini`. \
+You can replicate and modify to create your own config files for your images. \
+You can also override the options in these configs easily via the command line, e.g.
 
 ```shell
+./build/bin/train --config configs/{config_filename} --TrainParams.scene_names {your_scene_name} --TrainParams.name {your_training_name}
+
+## Example
 ./build/bin/train --config configs/train_normalnet.ini --TrainParams.scene_names tt_train --TrainParams.name new_name_for_this_training
 ```
-(note that `tt_train` is the scene name of the Tanks&Temples locomotive scene)
+(note that `tt_train` is the scene name of the Tanks&Temples locomotive scene provided by the sample data)
 
 For scenes with extensive environments, consider adding an environment map with:
 ```shell
+./build/bin/train --config configs/train_normalnet.ini \
 --PipelineParams.enable_environment_map true
 ```
 
-If GPU memory is sparse, consider lowering  `batch_size` (standard is 4),  `inner_batch_size` (standard is 4) or `train_crop_size` (standard is 512) with for example,
+If GPU memory is sparse, consider lowering  `batch_size` (standard is 4),  `inner_batch_size` (standard is 4) or `train_crop_size` (standard is 512) in the config files or via the command line, e.g.
 ```shell
---TrainParams.batch_size 1
---TrainParams.inner_batch_size 2
+./build/bin/train --config configs/train_normalnet.ini \
+--TrainParams.batch_size 1 \
+--TrainParams.inner_batch_size 2 \
 --TrainParams.train_crop_size 256
 ```
 (however this may impact quality).
@@ -301,18 +387,17 @@ If GPU memory is sparse, consider lowering  `batch_size` (standard is 4),  `inne
 By default, every 8th image is removed during training and used as a test image. If you want to change this split, consider overriding which percentage of images should be kept out of training with:
 
 ```shell
+./build/bin/train --config configs/train_normalnet.ini \
 --TrainParams.train_factor 0.1
 ```
 default is 0.125 (so 1/8).
 
-
 ### Live Viewer during Training
-
+**The command below is yet to be confirmed!** \
 An experimental live viewer is implemented which shows the fitting process during training in an OpenGL window.
 If headless mode is not required (see below) you can add a `-DLIVE_TRAIN_VIEWER=ON` to the first cmake call to compile this version in.
 
 Note: This will have an impact on training speed, as intermediate (full) images will we rendered during training.
-
 
 ## Headless Mode
 
