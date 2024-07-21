@@ -1,5 +1,7 @@
 # TRIPS: Trilinear Point Splatting for Real-Time Radiance Field Rendering
 
+This repo presents a walkthrough of setting up TRIPS and training with own images in AWS environment.
+
 <div style="text-align: center;">Linus Franke, Darius Rückert, Laura Fink, Marc Stamminger</div>
 
 
@@ -35,14 +37,21 @@ Supported Compiler: g++-9 (Linux), MSVC (Windows, we used 19.31.31105.0)
 
 Software Requirement: Conda (Anaconda/Miniconda)
 
-
-
+## Set Up AWS EC2 Instance
+You have to setup an AWS EC2 instance with NVIDIA GPU. The one we tested was g6.xlarge.
+For storage, the package (TRIPS, colmap) and application (miniconda) should take less then 20GB. 
+If you aim at training your model with your own images, you should also reserve at least 101x of the size of your images for COLMAP dense reconstruction prior to model training, i.e. reserve 101GB for 1.0GB images.
+Then, you can connect with your EC2 instance via SSH and Terminal, or other methods provided by AWS.
 
 ## Install Instructions Linux
 
 ### Install Ubuntu Dependancies
+After the connection, run the command below in the EC2 CLI.
+
 ```
-sudo apt install git build-essential gcc-9 g++-9
+sudo apt-get update
+sudo apt install git build-essential gcc-9 g++-9 
+sudo apt-get install unzip
 ```
 For the viewer, also install:
 ```
@@ -50,11 +59,30 @@ sudo apt install xorg-dev
 ```
 (There exists a headless mode without window management meant for training on a cluster, see below)
 
+### Install NVIDIA GPU Driver
+Please refer to Step 1 - Step 5 in the [blogpost](https://www.cherryservers.com/blog/install-cuda-ubuntu) for the installation guide.
+OR you can simply run the command below (latest update: 2024 Jul)
+```
+sudo apt install nvidia-driver-535
+```
+
+### Install Miniconda
+Please refer to the official installation guide [here](https://docs.anaconda.com/miniconda/#quick-command-line-install)
+OR you can simply run the command below
+```
+mkdir -p ~/miniconda3
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda3/miniconda.sh
+bash ~/miniconda3/miniconda.sh -b -u -p ~/miniconda3
+rm -rf ~/miniconda3/miniconda.sh
+~/miniconda3/bin/conda init bash
+~/miniconda3/bin/conda init zsh
+source ~/.bashrc
+```
+
 ### Clone Repo
 ```
 git clone git@github.com:lfranke/TRIPS.git
 cd TRIPS/
-git submodule update --init --recursive --jobs 0
 ```
 
 ### Create Conda Environment
@@ -64,7 +92,6 @@ cd TRIPS
 ```
 
 ### Install Pytorch
-
 ```shell
 cd TRIPS
 ./install_pytorch_precompiled.sh
@@ -80,7 +107,6 @@ conda install -y -c conda-forge cudnn=8.9.2
 ```
 
 For our experiments, we used CuDNN 8.9.5, however the conda installed version (8.9.2) should also work fine.
-
 
 ### Compile TRIPS
 
@@ -101,107 +127,22 @@ cd build
 
 cmake -DCMAKE_PREFIX_PATH="./External/libtorch/;${CONDA}" ..
 
-make -j10
-
+make
 ```
+
 make can take a long time, especially for some CUDA files.
 
-If you get a `undefined reference to ...@GLIBCXX_3.4.30' ` error during linking, most likely your linker fails to resolve the global and conda version of the c++ standard library.
+It is VERY likely that you will get a `undefined reference to ...@GLIBCXX_3.4.30' ` error during linking at around 93% of `make` process, most likely your linker fails to resolve the global and conda version of the c++ standard library.
 
-Consider removing the libstdc++ lib from the conda environment:
+Consider removing the libstdc++ lib from the conda environment before running `cmake` command
 
 ```shell
-cd TRIPS
-
-conda activate trips
-
-export CONDA=${CONDA_PREFIX:-"$(dirname $(which conda))/../"}
-
 rm $CONDA/lib/libstdc++.so*
 ```
 
-
-
 ## Install Instructions Windows
 
-### Software Requirements
-
-* VS2022
-* CUDA 11.8 (make sure to at least include Nsight NVTX, Development/* , Runtime/Libraries/* and the Visual Studio Integration)
-* Cudnn (copy into 11.8 folder as per install instructions, see below)
-* conda (we used Anaconda3)
-
-    [Start VS2022 once for CUDA integration setup]
-
-### Install CuDNN
-
-Download the latest version and add it to the CUDA 11.8 installation (this [article](https://medium.com/geekculture/install-cuda-and-cudnn-on-windows-linux-52d1501a8805) is a useful resource).
-
-We used CuDNN 8.9.7, however similar versions should also work fine.
-
-### Clone Repo
-```
-git clone git@github.com:lfranke/TRIPS.git
-cd TRIPS/
-git submodule update --init --recursive --jobs 8
-```
-
-### Setup Environment
-
-```shell
-conda update -n base -c defaults conda
-
-conda create -y -n trips python=3.9.7
-
-conda activate trips
-
-conda install -y cmake=3.26.4
-conda install -y -c intel mkl=2024.0.0
-conda install -y -c intel mkl-static=2024.0.0
-conda install openmp=8.0.1 -c conda-forge
-```
-
-### Install libtorch
-
-
-* Download: https://download.pytorch.org/libtorch/cu116/libtorch-win-shared-with-deps-1.13.1%2Bcu116.zip
-* Unzip
-* Copy into TRIPS/External
-
-Folder structure should look like:
-```shell
-TRIPS/
-    External/
-        libtorch/
-            bin/
-            cmake/
-            include/
-            lib/
-            ...
-        saiga/
-        ...
-    src/
-    ...
-```
-
-
-### Compile  TRIPS
-
-Configure (if you use the conda prompt shell):
-```shell
-cmake -Bbuild -DCMAKE_CUDA_COMPILER="%CUDA_PATH%\bin\nvcc.exe" -DCMAKE_PREFIX_PATH=".\External\libtorch" -DCONDA_P_PATH="%CONDA_PREFIX%" -DCUDA_P_PATH="%CUDA_PATH%" -DCMAKE_BUILD_TYPE=RelWithDebInfo .
-```
-
-OR: Configure (if you use the conda powershell):
-```shell
-cmake -Bbuild -DCMAKE_CUDA_COMPILER="$ENV:CUDA_PATH\bin\nvcc.exe" -DCMAKE_PREFIX_PATH=".\External\libtorch" -DCONDA_P_PATH="$ENV:CONDA_PREFIX" -DCUDA_P_PATH="$ENV:CUDA_PATH" -DCMAKE_BUILD_TYPE=RelWithDebInfo .
-```
-
-Compile (both shells):
-```shell
-cmake --build build --config RelWithDebInfo -j
-```
-The last cmake build call can take a lot of time.
+Please refer to [lfranke/TRIPS](https://github.com/lfranke/TRIPS)
 
 ## Install Instructions Docker
 
