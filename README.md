@@ -153,7 +153,8 @@ Please refer to [lfranke/TRIPS](https://github.com/lfranke/TRIPS)
 Thanks to user [abecadel](https://github.com/abecadel) for providing these Docker instructions.
 
 ### Install Docker
-Make sure to have docker installed with gpu support enables
+Make sure to have docker installed with gpu support enables.
+You can refer to the official [documentation](https://docs.docker.com/engine/install/ubuntu/#install-using-the-repository)
 
 ### Clone Repo
 Please follow the `Clone Repo` session in `Install Instructions Linux` above.
