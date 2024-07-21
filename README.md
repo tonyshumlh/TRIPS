@@ -323,7 +323,8 @@ sudo ninja install
 ### Image Reconstruction and Conversion (for your own images only)
 Assume your images are already in `scenes` folder, e.g. `~/TRIPS/scenes/{your_scene_name}/images/`
 
-You can simply run the command below in the root directory of `TRIPS` repo for COLMAP reconstruction (sparse + dense) for your images and COLMAP to ADOP conversion conversion prior to model training.
+Please refer to the official [documentation](https://colmap.github.io/cli.html#example) to use `COLMAP`. \
+OR you can simply run the command below in the root directory of `TRIPS` repo for COLMAP reconstruction (sparse + dense) for your images and COLMAP to ADOP conversion conversion prior to model training.
 ```
 ## COLMAP reconstruction
 bash ./colmap_reconstruction.sh ~/TRIPS/scenes/{your_scene_name}
