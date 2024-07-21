@@ -150,22 +150,23 @@ Thanks to user [abecadel](https://github.com/abecadel) for providing these Docke
 
 ### Install Docker
 Make sure to have docker installed with gpu support enables
+
 ### Clone Repo
-```
-git clone git@github.com:lfranke/TRIPS.git
-cd TRIPS/
-git submodule update --init --recursive --jobs 0
-```
+Please follow the `Clone Repo` session in `Install Instructions Linux` above.
+
 ### Build docker image
 ```
 docker build -t trips .
 ```
+
 ### Running training
 ```
-docker run -v {data_path}:/data -it trips /bin/bash
+docker run -v {data_path}:/data --gpus all -it trips /bin/bash
 ./train --config configs/train_normalnet.ini
 ```
+
 ### Running viewer (Linux only)
+**The command below is yet to be confirmed!**
 First enable X forwarding from docker
 ```
 sudo xhost +local:docker

@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libfreeimage3 \
     libfreeimage-dev \
     xorg-dev \
+    nvidia-driver-535 \
     unzip && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
@@ -48,8 +49,10 @@ COPY CMakeLists.txt .
 
 RUN mkdir build && \
     cd build && \
-    ../cmake-dist/bin/cmake -DCMAKE_PREFIX_PATH="./External/libtorch/;" .. && \
-    make -j6 && \
+    ../cmake-dist/bin/cmake -DCMAKE_PREFIX_PATH="./External/libtorch/;" \
+## Quick fix to specify the CUDA architecture version as Docker cannot detect it during build stage
+    -DSAIGA_CUDA_ARCH=8.9 -DTCNN_CUDA_ARCHITECTURES=8.9 -DTORCH_CUDA_ARCH_LIST=8.9 .. && \
+    make && \
     make install
 
 RUN mkdir /app/experiments
