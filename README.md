@@ -41,7 +41,7 @@ Software Requirement: Conda (Anaconda/Miniconda)
 ## Set Up AWS EC2 Instance
 You have to setup an AWS EC2 instance with NVIDIA GPU. The one we tested was g6.xlarge.
 
-For storage, the package (TRIPS, colmap, miniconda) should take less then 20GB. 
+For storage, the package (TRIPS, colmap, miniconda) should take less than 20GB. 
 If you aim at training your model with your own images, you should also reserve at least 101x of the size of your images for COLMAP dense reconstruction prior to model training, i.e. reserve 101GB for 1.0GB images.
 
 Then, you can connect with your EC2 instance via SSH and Terminal, or other methods provided by AWS.
