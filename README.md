@@ -357,8 +357,6 @@ Windows:
 Make again sure that the working directory is the root directory of `TRIPS`
 Otherwise, the loss models will not be found.
 
-The training results will be found in folder `experiments/`, e.g. `~/TRIPS/experiments/YYYY-MM-DD_hh-mm-ss_{your_training_name}`
-
 Two configs are given for the two networks used in the paper: `train_normalnet.ini` and `train_sphericalnet.ini`. \
 You can replicate and modify to create your own config files for your images. \
 You can also override the options in these configs easily via the command line, e.g.
@@ -393,6 +391,11 @@ By default, every 8th image is removed during training and used as a test image.
 --TrainParams.train_factor 0.1
 ```
 default is 0.125 (so 1/8).
+
+### Training Results
+The training results will be found in directory `experiments/`, e.g. `~/TRIPS/experiments/YYYY-MM-DD_hh-mm-ss_{your_training_name}`.
+
+Apart from previewing the results using Viewer, you can also view and compare the actual images and the generated images on test dataset in each epoch checkpoint directory, e.g. `~/TRIPS/experiments/YYYY-MM-DD_hh-mm-ss_{your_training_name}/ep0100/test/`.
 
 ### Live Viewer during Training
 **The command below is yet to be confirmed!** \
